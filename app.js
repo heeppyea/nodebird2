@@ -5,9 +5,11 @@ const path = require('path');
 const session = require('express-session');
 const nunjucks = require('nunjucks');
 const dotenv = require('dotenv');
+const { sequelize } = require('./models')
 
 dotenv.config();
 const pageRouter = require('./routes/page');
+
 
 const app = express();
 app.set('port', process.env.PORT || 8001); // 서버에 속성 심기, 앱 전체에서 app.listen(app.get('port'), () => { console.log('익스프레스 서버실행')} 이렇게 사용 가능
@@ -16,6 +18,16 @@ nunjucks.configure('views', {
   express : app,
   watch : true,
 });
+
+// 개발시 테이블을 잘못 만든 경우 {force : true}를 설정해두면 테이블이 다 지워지고 새로 생길 수 있음
+sequelize.sync({ force : true})
+    .then(() => {
+      console.log('데이터베이스 연결 성공')
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+
 
 app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -32,7 +44,7 @@ app.use(session({
   },
 }))
 
-app.use('/', pageRouter);
+// app.use('/', pageRouter);
 
 // 에러 미들웨어
 app.use((req, res, next) => {
